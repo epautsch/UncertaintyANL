@@ -23,14 +23,22 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 
 hyperparam_configs = [
-        {'t': 'hyperband', 'ep': 10, 'lr': 0.1, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 10, 'lr': 0.01, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 10, 'lr': 0.001, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 20, 'lr': 0.1, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 20, 'lr': 0.01, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 20, 'lr': 0.001, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 200, 'lr': 0.1, 'mo': 0.2},
-        {'t': 'hyperband', 'ep': 200, 'lr': 0.01, 'mo': 0.2},
+        {'t': 'hyperband', 'ep': 10, 'lr': 0.1, 'mo': 0.2}, # 1
+        {'t': 'hyperband', 'ep': 20, 'lr': 0.1, 'mo': 0.2}, # 2
+        {'t': 'hyperband', 'ep': 100, 'lr': 0.1, 'mo': 0.2}, # 3
+        {'t': 'hyperband', 'ep': 200, 'lr': 0.1, 'mo': 0.2}, # 4
+        {'t': 'hyperband', 'ep': 10, 'lr': 0.01, 'mo': 0.2}, # 5
+        {'t': 'hyperband', 'ep': 20, 'lr': 0.01, 'mo': 0.2}, # 6
+        {'t': 'hyperband', 'ep': 100, 'lr': 0.01, 'mo': 0.2}, # 7
+        {'t': 'hyperband', 'ep': 200, 'lr': 0.01, 'mo': 0.2}, # 8
+        {'t': 'hyperband', 'ep': 10, 'lr': 0.001, 'mo': 0.2}, # 9
+        {'t': 'hyperband', 'ep': 20, 'lr': 0.001, 'mo': 0.2}, # 10
+        {'t': 'hyperband', 'ep': 100, 'lr': 0.001, 'mo': 0.2}, # 11
+        {'t': 'hyperband', 'ep': 200, 'lr': 0.001, 'mo': 0.2}, # 12
+        {'t': 'hyperband', 'ep': 10, 'lr': 0.0001, 'mo': 0.2}, # 13
+        {'t': 'hyperband', 'ep': 20, 'lr': 0.0001, 'mo': 0.2}, # 14
+        {'t': 'hyperband', 'ep': 100, 'lr': 0.0001, 'mo': 0.2}, # 15
+        {'t': 'hyperband', 'ep': 200, 'lr': 0.0001, 'mo': 0.2}, # 16
 ]
 
 n_configs = len(hyperparam_configs)
