@@ -14,5 +14,5 @@ conda activate
 
 #for i in {1..10}
 #do
-    time mpiexec -n ${NTOTRANKS} --ppn ${NRANKS_PER_NODE} --depth=${NDEPTH} --cpu-bind depth /home/jneprz/digitsWithHPO/set_affinity_gpu_polaris.sh python3 /home/jneprz/digitsWithHPO/distributed_hyperband.py
+    time mpiexec -n ${NTOTRANKS} --ppn ${NRANKS_PER_NODE} --depth=${NDEPTH} --cpu-bind depth /home/jneprz/UncertaintyANL/distHyperband/set_affinity_gpu_polaris.sh python3 /home/jneprz/UncertaintyANL/distHyperband/distributed_hyperband.py
 #done
