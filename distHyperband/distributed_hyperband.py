@@ -119,6 +119,9 @@ if rank == 0:
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
     path = "./modelSaved/"
+    for file in glob.glob(os.path.join(path, '*')):
+        os.remove(file)
+
     h5_files = glob.glob(os.path.join(path, '*.h5'))
 
     # Creating deep ensemble
