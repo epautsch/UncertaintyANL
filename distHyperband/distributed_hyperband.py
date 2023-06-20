@@ -1,5 +1,9 @@
+import glob
 import keras
+import os
+import numpy as np
 import random
+import shortuuid
 import time
 from keras import optimizers
 from keras.datasets import mnist
@@ -8,8 +12,11 @@ from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import Flatten
 from keras.layers import MaxPooling2D
+from keras.models import load_model
 from keras.models import Sequential
 from mpi4py import MPI
+from sklearn.calibration import calibration_curve
+from sklearn.metrics import brier_score_loss
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -49,8 +56,8 @@ def digitsWithHPO(tuner, lr, mo, ep):
 
     #train
     hist = model.fit(x_train, y_train,batch_size=batch_size,epochs=ep,verbose=0,validation_data=(x_test, y_test))
-    #filename='./modelSaved/'+shortuuid.uuid()+'.h5'
-    #model.save(filename)
+    filename='./modelSaved/'+shortuuid.uuid()+'.h5'
+    model.save(filename)
 
     #evaluate
     score = model.evaluate(x_test, y_test, verbose=0)
@@ -73,9 +80,10 @@ if rank == 0:
          [0.001, 0.2, 100],
          [0.001, 0.2, 200],
          [0.0001, 0.2, 1],
-         [0.0001, 0.2, 20],
+         [0.0001, 0.2, 20]]
          [0.0001, 0.2, 100],
          [0.0001, 0.2, 200]]
+    num_tasks = len(hyperparameters_list)
     random.shuffle(hyperparameters_list)
 
     status = MPI.Status()
@@ -88,27 +96,57 @@ if rank == 0:
         hyperparameters_list = hyperparameters_list[:-1]
         comm.send(data, dest=i, tag=0)
 
-    # Still have hyperparameters left.
-    while len(hyperparameters_list) > 0:
-        performance = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
-        print(f'MAIN - Received from node {status.Get_source()}')
-        comm.send(hyperparameters_list[-1], dest=status.Get_source(), tag=0)
-        print(f'MAIN - Sent to node {status.Get_source()}')
-        hyperparameters_list = hyperparameters_list[:-1]
+    results = []
+    completed = 0
 
-    # If there's no hyperparameters left, send a termination signal.
+    # Receive results and distribute remaining hyperparameters
+    while len(hyperparameters_list) > 0 or completed < num_tasks:
+        performance = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+        results.append(performance)
+        completed += 1
+        print(f'MAIN - Received from node {status.Get_source()}')
+        print(performance)
+
+        if len(hyperparameters_list) > 0:
+            comm.send(hyperparameters_list[-1], dest=status.Get_source(), tag=0)
+            print(f'MAIN - Sent to node {status.Get_source()}')
+            hyperparameters_list = hyperparameters_list[:-1]
+
+    # Send termination signal.
     for i in range(1, size):
         comm.send(None, dest=i, tag=0)
+
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+
+    path = "./modelSaved/"
+    h5_files = glob.glob(os.path.join(path, '*.h5'))
+
+    # Creating deep ensemble
+    # TODO - distribute model loading and predicting with MPI
+    mc_predictions = [load_model(file).predict(x_test, batch_size=1000) for file in h5_files]
+
+    p = np.array(mc_predictions)
+    y_mean = p.mean(axis=0)
+    w = 1 / np.sum(y_mean, axis=1, keepdims=True)
+    y_mean *= w
+    #y_std = p.std(axis=0)*w
+
+    # Calc brier score
+    y_test_one_hot = np.eye(10)[y_test]
+    brier_scores = [brier_score_loss(y_test_one_hot[:, i], y_mean[:, i]) for i in range(10)]
+    print(f"Brier scores for each class: {brier_scores}")
+    mean_bs = np.mean(np.mean((y_mean - y_test_one_hot) ** 2, axis = 1))
+    print(f"Mean Brier score: {mean_bs}")
 
 else:
     # Worker nodes
     while True:
         hyperparameters = comm.recv(source=0, tag=MPI.ANY_TAG)
         if hyperparameters is None:
-            print(f'Node {rank} - DONE')
+            #print(f'Node {rank} - DONE')
             break
-        print(f'Node {rank} - Starting {hyperparameters}')
+        #print(f'Node {rank} - Starting {hyperparameters}')
         performance = digitsWithHPO("hyperband", *hyperparameters)
-        print(f'Node {rank} - Completed Performance: ', performance)
+        #print(f'Node {rank} - Completed Performance: ', performance)
         comm.send(performance, dest=0, tag=0)
 
