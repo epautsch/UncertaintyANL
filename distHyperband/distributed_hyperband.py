@@ -80,7 +80,7 @@ if rank == 0:
          [0.001, 0.2, 100],
          [0.001, 0.2, 200],
          [0.0001, 0.2, 1],
-         [0.0001, 0.2, 20]]
+         [0.0001, 0.2, 20],
          [0.0001, 0.2, 100],
          [0.0001, 0.2, 200]]
     num_tasks = len(hyperparameters_list)
@@ -119,8 +119,8 @@ if rank == 0:
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
     path = "./modelSaved/"
-    for file in glob.glob(os.path.join(path, '*')):
-        os.remove(file)
+    #for file in glob.glob(os.path.join(path, '*')):
+    #    os.remove(file)
 
     h5_files = glob.glob(os.path.join(path, '*.h5'))
 
@@ -140,6 +140,20 @@ if rank == 0:
     print(f"Brier scores for each class: {brier_scores}")
     mean_bs = np.mean(np.mean((y_mean - y_test_one_hot) ** 2, axis = 1))
     print(f"Mean Brier score: {mean_bs}")
+
+    # Calculate calibration error
+    n_bins = 10
+    bin_limits = np.linspace(0, 1, n_bins + 1)
+    bin_mids = (bin_limits[1:] + bin_limits[:-1]) / 2
+    y_prob_max = y_mean[np.arange(y_mean.shape[0]), y_mean.argmax(axis=1)]
+    bin_indices = np.digitize(y_prob_max, bin_limits) - 1
+    bin_counts = np.bincount(bin_indices, minlength=n_bins)
+    bin_sums = np.bincount(bin_indices, weights=(y_mean.argmax(axis=1) == y_test), minlength=n_bins)
+    non_empty_bins = bin_counts > 0
+    avg_pred_prob = np.bincount(bin_indices, weights=y_prob_max, minlength=n_bins) / bin_counts
+    bin_acc = bin_sums / bin_counts
+    calibration_error = np.sum(bin_counts[non_empty_bins] * np.abs(avg_pred_prob[non_empty_bins] - bin_acc[non_empty_bins])) / np.sum(bin_counts)
+    print(f"Calibration Error: {calibration_error}")
 
 else:
     # Worker nodes
