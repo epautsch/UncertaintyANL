@@ -1,3 +1,6 @@
+from mpi4py import MPI
+import socket
+
 import argparse
 import datetime
 import json
@@ -272,24 +275,52 @@ def batch_viz(model_dir):
 
 
 if __name__ == '__main__':
-    npz_path = './experiments_input/'
-    npz_files = [f for f in os.listdir(npz_path) if f.endswith('.npz')]
-    tensors_and_paths = [load_npz_to_tensor(os.path.join(npz_path, f)) for f in npz_files]
-    tensors, file_paths = zip(*tensors_and_paths)
-    stacked_tensors = torch.stack(tensors)
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+    hostname = socket.gethostname()
 
-    # src_model = 'deit_base_patch16_224'
-    # src_model = 'deit3_base_patch16_224.fb_in1k'
-    # src_model = 'deit3_large_patch16_224.fb_in1k'
-    # src_model = 'deit3_huge_patch14_224.fb_in1k'
-    # src_model = 'vit_huge_patch14_224.orig_in21k'
-    # src_model = 'vit_giant_patch14_clip_224.laion2b'
-    # src_model = 'vit_gigantic_patch14_clip_224.laion2b'
-    # src_model = 'swinv2_cr_small_ns_224.sw_in1k'
-    src_model = 'swinv2_cr_tiny_ns_224.sw_in1k'
-    args = parse_args(src_model)
-    # start(args, stacked_tensors, file_paths)
-    batch_viz(src_model)
+    model_configs = [
+            'deit3_base_patch16_224.fb_in1k', # 1
+            'deit3_large_patch16_224.fb_in1k', # 2
+            'deit3_huge_patch14_224.fb_in1k', # 3
+            'vit_huge_patch14_224.orig_in21k', # 4
+            'vit_giant_patch14_clip_224.laion2b', # 5
+            'vit_gigantic_patch14_clip_224.laion2b', # 6
+            'swinv2_cr_small_ns_224.sw_in1k', # 7
+            'swinv2_cr_tiny_ns_224.sw_in1k', # 8
+            ]
+    
+    n_configs = len(model_configs)
+    n_configs_per_rank = n_configs // size
+
+    begin = rank * n_configs_per_rank
+    end = (rank + 1) * n_configs_per_rank if rank != size - 1 else n_configs
+
+    for i in range(begin, end):
+        
+        npz_path = './experiments_input/'
+        npz_files = [f for f in os.listdir(npz_path) if f.endswith('.npz')]
+        tensors_and_paths = [load_npz_to_tensor(os.path.join(npz_path, f)) for f in npz_files]
+        tensors, file_paths = zip(*tensors_and_paths)
+        stacked_tensors = torch.stack(tensors)
+
+        # src_model = 'deit_base_patch16_224'
+        # src_model = 'deit3_base_patch16_224.fb_in1k'
+        # src_model = 'deit3_large_patch16_224.fb_in1k'
+        # src_model = 'deit3_huge_patch14_224.fb_in1k'
+        # src_model = 'vit_huge_patch14_224.orig_in21k'
+        # src_model = 'vit_giant_patch14_clip_224.laion2b'
+        # src_model = 'vit_gigantic_patch14_clip_224.laion2b'
+        # src_model = 'swinv2_cr_small_ns_224.sw_in1k'
+        # src_model = 'swinv2_cr_tiny_ns_224.sw_in1k'
+        src_model = model_configs[i]
+        args = parse_args(src_model)
+        print(type(args))
+        print(type(stacked_tensors))
+        print(type(file_paths))
+        start(args, stacked_tensors, file_paths)
+        batch_viz(src_model)
 
 
 

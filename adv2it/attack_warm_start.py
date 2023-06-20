@@ -149,7 +149,6 @@ def local_adv(device, model, att_gen, criterion, img, label, eps, ben_cam, attac
         #   loss = criterion(out_adv[-1], label)
         # else:
         # loss = criterion(out_adv, label)
-
         loss.backward()
 
         adv_noise = adv.grad
