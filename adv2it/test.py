@@ -220,8 +220,8 @@ def start(args=None, npz_tensor=None, file_paths=None):
                              'ben_cam': ben_cam,
                              'adv_label': adv_out.detach().cpu().numpy()
                              }
-                os.makedirs(f'{args.src_model}/output_success/', exist_ok=True)
-                np.savez(f'{args.src_model}/output_success/output_{name}.npz', **save_dobj)
+                os.makedirs(f'/grand/EVITA/erik/{args.src_model}/output_success/', exist_ok=True)
+                np.savez(f'/grand/EVITA/erik/{args.src_model}/output_success/output_{name}.npz', **save_dobj)
 
                 p_bar.set_postfix({'status': 'Attack completed successfully!',
                                    'success rate': f'{(fool_rate / (j+1)) * 100:.2f}%'})
@@ -233,8 +233,8 @@ def start(args=None, npz_tensor=None, file_paths=None):
                              'ben_cam': ben_cam,
                              'adv_label': adv_out.detach().cpu().numpy()
                              }
-                os.makedirs(f'{args.src_model}/output_fail/', exist_ok=True)
-                np.savez(f'{args.src_model}/output_fail/output_{name}.npz', **save_dobj)
+                os.makedirs(f'/grand/EVITA/erik/{args.src_model}/output_fail/', exist_ok=True)
+                np.savez(f'/grand/EVITA/erik/{args.src_model}/output_fail/output_{name}.npz', **save_dobj)
 
                 p_bar.set_postfix({'status': 'Attack failed.',
                                    'success rate': f'{(fool_rate / (j+1)) * 100:.2f}%'})
@@ -320,7 +320,7 @@ if __name__ == '__main__':
         print(type(stacked_tensors))
         print(type(file_paths))
         start(args, stacked_tensors, file_paths)
-        batch_viz(src_model)
+        batch_viz(f'/grand/EVITA/erik/{src_model}')
 
 
 
