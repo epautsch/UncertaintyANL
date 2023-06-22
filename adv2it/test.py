@@ -35,6 +35,7 @@ from torchvision.datasets import ImageFolder
 # torch.cuda.set_device(2)
 # torch.cuda.current_device()
 
+
 targeted_class_dict = {
     24: "Great Grey Owl",
     99: "Goose",
@@ -223,8 +224,8 @@ def start(args=None, npz_tensor=None, file_paths=None):
                 os.makedirs(f'/grand/EVITA/erik/{args.src_model}/output_success/', exist_ok=True)
                 np.savez(f'/grand/EVITA/erik/{args.src_model}/output_success/output_{name}.npz', **save_dobj)
 
-                p_bar.set_postfix({'status': 'Attack completed successfully!',
-                                   'success rate': f'{(fool_rate / (j+1)) * 100:.2f}%'})
+                p_bar.set_postfix({'atk ratio': f'{int(fool_rate)} / {j + 1}',
+                                   'success_rate': f'{(fool_rate / (j + 1)) * 100:.2f}%'})
 
             else:
                 save_dobj = {'adv_x': vutils.make_grid(adv, normalize=False, scale_each=True).cpu(),
@@ -236,8 +237,11 @@ def start(args=None, npz_tensor=None, file_paths=None):
                 os.makedirs(f'/grand/EVITA/erik/{args.src_model}/output_fail/', exist_ok=True)
                 np.savez(f'/grand/EVITA/erik/{args.src_model}/output_fail/output_{name}.npz', **save_dobj)
 
-                p_bar.set_postfix({'status': 'Attack failed.',
-                                   'success rate': f'{(fool_rate / (j+1)) * 100:.2f}%'})
+                p_bar.set_postfix({'atk ratio': f'{int(fool_rate)} / {j + 1}',
+                                   'success_rate': f'{(fool_rate / (j + 1)) * 100:.2f}%'})
+                   
+    final_fool_acc = fool_rate / (len(npz) + 1)
+    return final_fool_acc, len(npz)
 
 
 def convert_to_npz(img_path, npz_dir):
@@ -305,22 +309,16 @@ if __name__ == '__main__':
         tensors, file_paths = zip(*tensors_and_paths)
         stacked_tensors = torch.stack(tensors)
 
-        # src_model = 'deit_base_patch16_224'
-        # src_model = 'deit3_base_patch16_224.fb_in1k'
-        # src_model = 'deit3_large_patch16_224.fb_in1k'
-        # src_model = 'deit3_huge_patch14_224.fb_in1k'
-        # src_model = 'vit_huge_patch14_224.orig_in21k'
-        # src_model = 'vit_giant_patch14_clip_224.laion2b'
-        # src_model = 'vit_gigantic_patch14_clip_224.laion2b'
-        # src_model = 'swinv2_cr_small_ns_224.sw_in1k'
-        # src_model = 'swinv2_cr_tiny_ns_224.sw_in1k'
         src_model = model_configs[i]
         args = parse_args(src_model)
         print(type(args))
         print(type(stacked_tensors))
         print(type(file_paths))
-        start(args, stacked_tensors, file_paths)
+        fool_acc, len_npz = start(args, stacked_tensors, file_paths)
         batch_viz(f'/grand/EVITA/erik/{src_model}')
+        
+        print(f'Length of npz: {len_npz}')
+        print(f'{src_model} - Rank: {rank} - Host: {hostname} - Acc: {fool_acc:.2f}%')
 
 
 
