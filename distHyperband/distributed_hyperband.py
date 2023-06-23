@@ -25,14 +25,12 @@ size = comm.Get_size()
 def digitsWithHPO(tuner, lr, mo, ep):
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-    #Data Preprocessing
+    # Data Preprocessing
     x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
     x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
     input_shape = (28, 28, 1)
-    # conversion of class vectors to matrices of  binary class
     batch_size = 128
     num_classes = 10
-
     y_train = keras.utils.np_utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.np_utils.to_categorical(y_test, num_classes)
     x_train = x_train.astype('float32')
@@ -40,7 +38,7 @@ def digitsWithHPO(tuner, lr, mo, ep):
     x_train /= 255
     x_test /= 255
 
-    #create model
+    # Create CNN
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(3, 3),activation='relu',input_shape=input_shape))
     model.add(Conv2D(64, (3, 3), activation='relu'))
@@ -54,19 +52,24 @@ def digitsWithHPO(tuner, lr, mo, ep):
         optimizer=optimizers.Adam(learning_rate=lr),
         metrics=['accuracy'])
 
-    #train
+    # Train
     hist = model.fit(x_train, y_train,batch_size=batch_size,epochs=ep,verbose=0,validation_data=(x_test, y_test))
     filename='./modelSaved/'+shortuuid.uuid()+'.h5'
     model.save(filename)
 
-    #evaluate
+    # Evaluate
     score = model.evaluate(x_test, y_test, verbose=0)
     #print('Test loss: ', score[0])
-    #print('Test Acceracy: ', score[1])
+    #print('Test Accuruacy: ', score[1])
     return score
 
-# Main Node
+# Distributing Node
 if rank == 0:
+    # empty saved model directory
+    path = "./modelSaved/"
+    for file in glob.glob(os.path.join(path, '*')):
+        os.remove(file)
+
     hyperparameters_list = [[0.1, 0.2, 1],
          [0.1, 0.2, 20],
          [0.1, 0.2, 100],
@@ -92,9 +95,11 @@ if rank == 0:
     for i in range(1, size):
         if len(hyperparameters_list) == 0:
             break
-        data = hyperparameters_list[-1]
-        hyperparameters_list = hyperparameters_list[:-1]
-        comm.send(data, dest=i, tag=0)
+        # ignore if has local rank 0. (will not be assigned a gpu)
+        elif i % 5 != 0:
+            data = hyperparameters_list[-1]
+            hyperparameters_list = hyperparameters_list[:-1]
+            comm.send(data, dest=i, tag=0)
 
     results = []
     completed = 0
@@ -105,39 +110,40 @@ if rank == 0:
         results.append(performance)
         completed += 1
         print(f'MAIN - Received from node {status.Get_source()}')
-        print(performance)
 
         if len(hyperparameters_list) > 0:
             comm.send(hyperparameters_list[-1], dest=status.Get_source(), tag=0)
             print(f'MAIN - Sent to node {status.Get_source()}')
             hyperparameters_list = hyperparameters_list[:-1]
 
-    # Send termination signal.
+    # Send termination signal
     for i in range(1, size):
         comm.send(None, dest=i, tag=0)
 
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-    path = "./modelSaved/"
-    #for file in glob.glob(os.path.join(path, '*')):
-    #    os.remove(file)
-
-    h5_files = glob.glob(os.path.join(path, '*.h5'))
-
     # Creating deep ensemble
     # TODO - distribute model loading and predicting with MPI
+    h5_files = glob.glob(os.path.join(path, '*.h5'))
     mc_predictions = [load_model(file).predict(x_test, batch_size=1000) for file in h5_files]
 
+    # Normalize
     p = np.array(mc_predictions)
     y_mean = p.mean(axis=0)
     w = 1 / np.sum(y_mean, axis=1, keepdims=True)
     y_mean *= w
-    #y_std = p.std(axis=0)*w
+    y_std = p.std(axis=0)*w
+    y_var = p.var(axis=0)*w
 
     # Calc brier score
-    y_test_one_hot = np.eye(10)[y_test]
-    brier_scores = [brier_score_loss(y_test_one_hot[:, i], y_mean[:, i]) for i in range(10)]
-    print(f"Brier scores for each class: {brier_scores}")
+    y_test_one_hot = to_categorical(y_test, num_classes=10)
+    size - len(y_test_one_hot)
+    brier_scores = np.empty((size, 10))
+    for i in range(size):
+        for j in range(10):
+            brier_scores[i, j] = brier_score_loss([y_test_one_hot[i][j]], [y_mean[i][j]])
+
+    np.save('brier_scores.npy', brier_scores)
     mean_bs = np.mean(np.mean((y_mean - y_test_one_hot) ** 2, axis = 1))
     print(f"Mean Brier score: {mean_bs}")
 
@@ -162,8 +168,8 @@ else:
         if hyperparameters is None:
             #print(f'Node {rank} - DONE')
             break
-        #print(f'Node {rank} - Starting {hyperparameters}')
+        print(f'Node {rank} - Starting {hyperparameters}')
         performance = digitsWithHPO("hyperband", *hyperparameters)
-        #print(f'Node {rank} - Completed Performance: ', performance)
+        print(f'Node {rank} - Completed Performance: ', performance)
         comm.send(performance, dest=0, tag=0)
 
