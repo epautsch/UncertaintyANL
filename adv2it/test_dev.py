@@ -3,6 +3,7 @@ import socket
 
 import argparse
 import datetime
+import time
 import json
 import logging
 import os
@@ -285,42 +286,46 @@ if __name__ == '__main__':
     hostname = socket.gethostname()
 
     model_configs = [
-            #'deit3_base_patch16_224.fb_in1k', # 1
-            #'deit3_large_patch16_224.fb_in1k', # 2
-            #'deit3_huge_patch14_224.fb_in1k', # 3
-            #'vit_huge_patch14_224.orig_in21k', # 4
-            #'vit_giant_patch14_clip_224.laion2b', # 5
-            #'vit_gigantic_patch14_clip_224.laion2b', # 6
-            #'swinv2_cr_small_ns_224.sw_in1k', # 7
+            'deit3_base_patch16_224.fb_in1k', # 1
+            'deit3_large_patch16_224.fb_in1k', # 2
+            'deit3_huge_patch14_224.fb_in1k', # 3
+            'vit_huge_patch14_224.orig_in21k', # 4
+            'vit_giant_patch14_clip_224.laion2b', # 5
+            'vit_gigantic_patch14_clip_224.laion2b', # 6
+            'swinv2_cr_small_ns_224.sw_in1k', # 7
             'swinv2_cr_tiny_ns_224.sw_in1k', # 8
             ]
     
     n_configs = len(model_configs)
-    n_configs_per_rank = n_configs // size
+   
+    model_index = rank // 4
+    data_index = rank % 4
 
-    begin = rank * n_configs_per_rank
-    end = (rank + 1) * n_configs_per_rank if rank != size - 1 else n_configs
+    npz_path = './experiments_input/'
+    npz_files = [f for f in os.listdir(npz_path) if f.endswith('.npz')]
+    tensors_and_paths = [load_npz_to_tensor(os.path.join(npz_path, f)) for f in npz_files]
+    tensors, file_paths = zip(*tensors_and_paths)
 
-    for i in range(begin, end):
-        
-        npz_path = './experiments_input/'
-        npz_files = [f for f in os.listdir(npz_path) if f.endswith('.npz')]
-        tensors_and_paths = [load_npz_to_tensor(os.path.join(npz_path, f)) for f in npz_files]
-        tensors, file_paths = zip(*tensors_and_paths)
-        #tensors = tensors[:int((len(tensors) * 0.01))]
-        #file_paths = file_paths[:int((len(file_paths) * 0.01))]
-        stacked_tensors = torch.stack(tensors)
+    quarter = len(tensors) // 4
+    data_quarters = [tensors[i:i + quarter] for i in range(0, len(tensors), quarter)]
+    path_quarters = [file_paths[i:i + quarter] for i in range(0, len(file_paths), quarter)]
 
-        src_model = model_configs[i]
-        args = parse_args(src_model)
-        fool_acc, len_npz = start(args, stacked_tensors, file_paths)
-        #batch_viz(f'/grand/EVITA/erik/{src_model}')
-        
-        print(f'Length of npz: {len_npz}')
-        print(f'{src_model} - Rank: {rank} - Host: {hostname} - Acc: {fool_acc * 100:.2f}%')
+    data_part = data_quarters[data_index]
+    path_part = path_quarters[data_index]
+    stacked_tensors = torch.stack(data_part)
+    src_model = model_configs[model_index]
 
+    args = parse_args(src_model)
+    start_time = time.time()
+    fool_acc, len_npz = start(args, stacked_tensors, path_part)
+    #batch_viz(f'/grand/EVITA/erik/{src_model}')
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    elapsed_hours, rem = divmod(elapsed_time, 3600)
+    elapsed_min, elapsed_sec = divmod(rem, 60)
+    
+    print(f'Length of npz: {len_npz}')
+    print(f'{src_model} - Rank: {rank} - Host: {hostname} - Acc: {fool_acc * 100:.2f}% - Time: {int(elapsed_hours)}:{int(elapsed_min)}:{elapsed_sec:.2f}')
 
-
-
-
-
+    
