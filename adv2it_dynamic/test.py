@@ -320,9 +320,11 @@ if __name__ == '__main__':
 
         status = MPI.Status()
 
+        # Initial config distribution
         for i in range(1, size):
             if len(model_configs) == 0:
                 break
+            # ignore if local rank 0
             elif i % 5 != 0:
                 data = model_configs[-1]
                 model_configs = model_configs[:-1]
@@ -331,6 +333,7 @@ if __name__ == '__main__':
         results = []
         completed = 0
 
+        # Receive results and distribute remaining hyperparameters
         while len(model_configs) > 0 or completed < n_configs:
             performance = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             results.append(performance)
@@ -345,6 +348,7 @@ if __name__ == '__main__':
 
         for i in range(1, size):
             comm.send(None, dest=i, tag=0)
+
     else:
         while True:
             config = comm.recv(source=0, tag=MPI.ANY_TAG)
@@ -353,3 +357,4 @@ if __name__ == '__main__':
             print(f'Node {rank} - Starting {config}')
             performance = train(config)
             print(f'{performance[0]} - Rank: {rank} - Host: {hostname} - Acc: {performance[1]} - NPZ Len: {performance[2]}')
+            comm.send(performance, dest=0, tag=0)
