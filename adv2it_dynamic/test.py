@@ -285,11 +285,11 @@ def train(config):
     stacked_tensors = torch.stack(tensors)
 
     args = parse_args(config)
-    print(type(args))
-    print(type(stacked_tensors))
-    print(type(file_paths))
+    #print(type(args))
+    #print(type(stacked_tensors))
+    #print(type(file_paths))
     fool_acc, len_npz = start(args, stacked_tensors, file_paths)
-    batch_viz(f'/grand/EVITA/jneprz/{config}')
+    #batch_viz(f'/grand/EVITA/jneprz/{config}')
 
     #print(f'Length of npz: {len_npz}')
     #print(f'{config} - Rank: {rank} - Host: {hostname} - Acc: {fool_acc:.2f}%')
