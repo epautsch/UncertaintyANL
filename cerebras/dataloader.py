@@ -29,11 +29,12 @@ class CustomDataset(Dataset):
 
 
 def get_custom_dataset():
-    data_dir = os.path.join(os.getcwd(), 'custom_dataset_dir')
+    data_dir = '/home/epautsch/experiments_input'
+    #data_dir = os.path.join(os.getcwd(), 'custom_dataset_dir')
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        transforms.Lambda(lambda x: torch.as_tensor(x, dtype:torch.float16)),
+        transforms.Lambda(lambda x: torch.as_tensor(x, dtype=torch.float16)),
     ])
     return CustomDataset(data_dir, transform=transform)
 
