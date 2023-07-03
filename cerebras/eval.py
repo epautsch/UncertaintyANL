@@ -26,7 +26,7 @@ class CustomViTModel(nn.Module):
 # Params
 MODEL_DIR = "./"
 COMPILE_ONLY = False
-VALIDATE_ONLY = False
+VALIDATE_ONLY = True
 
 CKPT_STEPS = 5
 
@@ -62,6 +62,84 @@ def main_eval_loop():
     accuracy = cstorch.metrics.AccuracyMetric(
             "accuracy", compute_on_system=True
     )
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    @cstorch.compile_step
+    def eval_step(batch):
+        inputs, targets = batch
+        outputs = compiled_model(inputs).to(torch.float16)
+        loss = loss_fn(outputs, targets)
+
+        accuracy(
+                labels=targets.clone(), predictions=outputs.argmax(-1).int(),
+        )
+        
+        return loss
+
+    total_loss = 0
+    total_steps = 0
+
+    @cstorch.step_closure
+    def post_eval_step(loss: torch.tensor):
+        nonlocal total_loss
+        nonlocal total_steps
+
+        logging.info(
+                f"| Eval: {compiled_model.backend.name} "
+                f"Step={global_step}, "
+                f"Loss={loss.item():.5f}"
+        )
+
+        if torch.isnan(loss).any().item():
+            raise ValueError("NaN loss detected.")
+        if torch.isinf(loss).any().item():
+            raise ValueError("inf loss detected.")
+
+        total_loss += loss.item()
+        total_steps += 1
+
+        cstorch.scalar_summary("loss", loss)
+
+    batch_size = 4
+    dataloader = cstorch.utils.data.DataLoader(
+            input_fn_eval, batch_size, num_steps=10
+    )
+
+    for i, batch in enumerate(dataloader):
+        loss = eval_step(batch)
+
+        global_step += 1
+
+        post_eval_step(loss)
+
+    writer.add_scalar(f"Eval Accuracy", float(accuracy), global_step)
+    cstorch.save_summaries(writer, global_step)
+
+
+if __name__ == "__main__":
+
+    logging.getLogger().setLevel(logging.INFO)
+
+    cstorch.configure(
+            model_dir=MODEL_DIR,
+            compile_dir="./compile_dir",
+            mount_dirs=[os.getcwd()],
+            python_paths=[os.getcwd()],
+            compile_only=COMPILE_ONLY,
+            validate_only=VALIDATE_ONLY,
+            checkpoint_steps=CKPT_STEPS,
+            # CSConfig params
+            max_wgt_servers=1,
+            num_workers_per_csx=1,
+            max_act_per_csx=1,
+    )
+
+    main_eval_loop()
+
+
+
+
 
 
 
