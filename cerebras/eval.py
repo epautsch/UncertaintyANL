@@ -16,7 +16,7 @@ class CustomViTModel(nn.Module):
     def __init__(self, num_classes=1000):
         super().__init__()
         self.vit = timm.create_model("vit_base_patch16_224", pretrained=True)
-        self.vit,head = nn.Linear(self.vit.head.in_features, num_classes)
+        self.vit.head = nn.Linear(self.vit.head.in_features, num_classes)
 
     def forward(self, x):
         x = F.interpolate(x, size=(224, 224))

@@ -12,14 +12,16 @@ class CustomDataset(Dataset):
         self.transform = transform
 
         self.image_files = [f for f in os.listdir(dir_path) if f.endswith('.npz')]
-
+    
     def __len__(self):
         return len(self.image_files)
 
-    def __getitem__(seof, idx):
+    def __getitem__(self, idx):
         image_file = self.image_files[idx]
+        print(image_file)
         data = np.load(os.path.join(self.dir_path, image_file))
-        image = data['image']
+        print(data.files)
+        image = data['img_x']
 
         if self.transform:
             image = self.transform(image)
@@ -40,12 +42,12 @@ def get_custom_dataset():
 
 
 def input_fn_train(batch_size=4, drop_last=False):
-    train_dataset = get_custom_dataset(train=True)
+    train_dataset = get_custom_dataset()
     return DataLoader(train_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=True)
 
 
 def input_fn_eval(batch_size=4, drop_last=False):
-    eval_dataset = get_custom_dataset(train=False)
+    eval_dataset = get_custom_dataset()
     return DataLoader(eval_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=False)
 
 
