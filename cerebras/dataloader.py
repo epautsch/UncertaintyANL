@@ -22,7 +22,7 @@ class CustomDataset(Dataset):
         data = np.load(os.path.join(self.dir_path, image_file))
         print(data.files)
         image = data['img_x']
-
+        print(image.shape)
         if self.transform:
             image = self.transform(image)
         label = torch.tensor(data['label'], dtype=torch.int32)
