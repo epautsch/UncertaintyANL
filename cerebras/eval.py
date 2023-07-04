@@ -15,19 +15,18 @@ from dataloader import input_fn_train, input_fn_eval
 class CustomViTModel(nn.Module):
     def __init__(self, num_classes=1000):
         super().__init__()
-        self.vit = timm.create_model("vit_base_patch16_224", pretrained=True)
+        self.vit = timm.create_model("vit_base_patch16_224", pretrained=False)
         self.vit.head = nn.Linear(self.vit.head.in_features, num_classes)
 
     def forward(self, x):
-        x = F.interpolate(x, size=(224, 224))
         x = self.vit(x)
         return x
 
 
 # Params
 MODEL_DIR = "./"
-COMPILE_ONLY = False
-VALIDATE_ONLY = True
+COMPILE_ONLY = True
+VALIDATE_ONLY = False
 
 CKPT_STEPS = 5
 
