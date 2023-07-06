@@ -33,3 +33,4 @@ runconfig:
         log_steps: 50
         seed: 1
         save_losses: True
+        
