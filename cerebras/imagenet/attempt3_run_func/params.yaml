@@ -1,3 +1,6 @@
+train_input:
+    split_percentage: 0.0001
+
 model:
     name: "vit"
     in_channels: 3
