@@ -1,9 +1,12 @@
 import math
+from tqdm import tqdm
+from transformers import ViTImageProcessor, ViTForImageClassification
 
 import torch
 import torch.nn as nn
 from functools import partial
 
+from timm.models import create_model
 from timm.models.vision_transformer import VisionTransformer, _cfg
 from timm.models.registry import register_model
 from timm.models.layers import trunc_normal_
@@ -12,8 +15,8 @@ from datasets import load_dataset
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from skimage.transform import resize
-
 import numpy as np
+from PIL import Image
 
 import random
 
@@ -249,6 +252,15 @@ def deit_base_distilled_patch16_384(pretrained=False, **kwargs):
         model.load_state_dict(checkpoint["model"])
     return model
 
+
+def normalize(t, mean, std):
+    t[:, 0, :, :] = (t[:, 0, :, :] - mean[0]) / std[0]
+    t[:, 1, :, :] = (t[:, 1, :, :] - mean[1]) / std[1]
+    t[:, 2, :, :] = (t[:, 2, :, :] - mean[2]) / std[2]
+
+    return t
+
+
 def imagenet_transforms(image):
     image = resize(image, (224, 224), mode='reflect')
 
@@ -261,8 +273,6 @@ def imagenet_transforms(image):
         # permute axes to (c, h, w) format
         image = image.permute(2, 0, 1)
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    image = normalize(image)
     return image
 
 
@@ -280,40 +290,56 @@ def get_imagenet_dataset(split, slice_percentage=1.0):
     return dataset
 
 
-def input_fn_train(batch_size=4, drop_last=False):
-    train_dataset = get_imagenet_dataset('train')
+def input_fn_train(batch_size=1, drop_last=False, slice_percentage=1.0):
+    train_dataset = get_imagenet_dataset('train', slice_percentage=slice_percentage)
     return DataLoader(train_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=True)
 
 
-def input_fn_eval(batch_size=4, drop_last=False):
-    eval_dataset = get_imagenet_dataset('validation', slice_percentage=0.01)
+def input_fn_eval(batch_size=1, drop_last=False, slice_percentage=1.0):
+    eval_dataset = get_imagenet_dataset('validation', slice_percentage=slice_percentage)
     return DataLoader(eval_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=False)
 
-deit_model = deit_base_patch16_224(pretrained=True)
-deit_model.eval()
+model = deit_base_patch16_224(pretrained=True)
+#model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')
+model.eval()
 
 # load images here
-eval_dataloader = input_fn_eval()
+eval_dataloader = input_fn_eval(batch_size=1, slice_percentage=0.0001)
 
 device = torch.device('cuda')
 cuda_available = torch.cuda.is_available()
 print(f'CUDA is available: {cuda_available}')
-deit_model.to(device)
+model.to(device)
+
+mean = (0.5, 0.5, 0.5)
+std = (0.5, 0.5, 0.5)
 
 correct_preds = 0
 total_preds = 0
 
-for batch in eval_dataloader:
-  images = batch['image'].to(device)
-  labels = batch['label'].to(device)
-  
-  with torch.no_grad():
-      outputs = deit_model(images)
-  
-  for output in outputs:
-      _, preds = torch.max(output, dim=1)
-      correct_preds += (preds == labels).sum().item()
-      total_preds += labels.numel()
+unnorm = transforms.Normalize((-1, -1, -1), (2, 2, 2))
+
+with tqdm(enumerate(eval_dataloader), total=len(eval_dataloader)) as pbar:
+    for i, batch in enumerate(eval_dataloader):
+      images = batch['image'].to(device)
+      labels = batch['label'].to(device)
+      
+      with torch.no_grad():
+          images = normalize(images, mean=mean, std=std)
+          outputs = model(images, only_last=True)
+          _, preds = torch.max(outputs, dim=-1)
+          correct_preds += (preds == labels).sum().item()
+          total_preds += labels.numel()
+
+          for j in range(images.shape[0]):
+              img = unnorm(images[j]).cpu().permute(1, 2, 0).numpy()
+              img = np.clip(img, 0, 1)
+              img = Image.fromarray((img * 255).astype(np.uint8))
+              img.save(f'image_{i*images.shape[0] + j}_pred_{preds[j].item()}_true_{labels[j].item()}.jpg')
+
+#_, preds = torch.max(outputs.logits, dim=1)
+#correct_preds += (preds == labels).sum().item()
+#total_preds += labels.numel()
       
 
 overall_accuracy = correct_preds / total_preds
