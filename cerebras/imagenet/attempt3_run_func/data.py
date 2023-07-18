@@ -18,7 +18,7 @@ def imagenet_transforms(image):
     # permute axes to (c, h, w) format
         image = image.permute(2, 0, 1)
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
     image = normalize(image)
     return image
 
@@ -33,24 +33,22 @@ def get_imagenet_dataset(split, slice_percentage=1.0):
     indices = np.random.permutation(num_samples)[:int(num_samples * slice_percentage)]
     dataset = dataset.select(indices)
     
-    #new_features = dataset.features.copy()
-    #new_features['label'] = Value('int32')
-    #dataset = dataset.cast(new_features)
+    new_features = dataset.features.copy()
+    new_features['label'] = Value('int32')
+    dataset = dataset.cast(new_features)
 
     dataset = dataset.map(lambda x: {'image': imagenet_transforms(x['image']), 'label': x['label']})
     
     return dataset
 
 
-def input_fn_train(params=None, batch_size=4, drop_last=False):
-    input_params = params['train_input']
-
-    train_dataset = get_imagenet_dataset('train', input_params['split_percentage'])
+def input_fn_train(batch_size=4, drop_last=False, slice_percentage=1.0):#slice_percentage=input_params['split_percentage']):
+    train_dataset = get_imagenet_dataset('train', slice_percentage=slice_percentage)
     data_loader = DataLoader(train_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=True)
     return data_loader
 
 
-def input_fn_eval(batch_size=4, drop_last=False):
-    eval_dataset = get_imagenet_dataset('validation')
+def input_fn_eval(batch_size=4, drop_last=False, slice_percentage=1.0):#slice_percentage=input_params['split_percentage']):
+    eval_dataset = get_imagenet_dataset('validation', slice_percentage=slice_percentage)
     data_loader = DataLoader(eval_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=False)
     return data_loader
