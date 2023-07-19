@@ -24,21 +24,29 @@ CHECKPOINT_STEPS = 5
 IS_PRETRAINED_CHECKPOINT = False
 
 
-def main_training_loop():
+def main_training_loop(cs_config):
     torch.manual_seed(2023)
     
-    model = VisionTransformer()
-    compiled_model = cstorch.compile(model, backend='WSE_WS')
-    
-    for idx, param in enumerate(model.parameters()):
-        print(f'Param #{idx}, Is leaf: {param.is_leaf}, Size: {param.size()}')
+    backend = cstorch.backend(
+            BACKEND,
+            artifact_dir=MODEL_DIR,
+            compile_dir="./compile_dir",
+            compile_only=COMPILE_ONLY,
+            validate_only=VALIDATE_ONLY,
+    )
+
+    with backend.device:
+        model = VisionTransformer()
+
+    model = cstorch.compile(model, backend)
 
     loss_fn = torch.nn.CrossEntropyLoss()
 
     optimizer = cstorch.optim.configure_optimizer(
-            optimizer_type='Adam',
+            optimizer_type='SGD',
             params=model.parameters(),
             lr=0.01,
+            momentum=0.0
     )
 
     lr_params = {
@@ -90,7 +98,7 @@ def main_training_loop():
     @cstorch.compile_step
     def training_step(batch):
         inputs, targets = batch
-        outputs = compiled_model(inputs)
+        outputs = model(inputs)
 
         loss = loss_fn(outputs, targets)
 
@@ -104,21 +112,27 @@ def main_training_loop():
 
         accumulate_loss(loss)
 
+        cstorch.summarize_scalar('loss', loss)
+
         return loss
 
-    writer = SummaryWriter(log_dir=os.path.join(MODEL_DIR, 'train'))
+    writer = cstorch.utils.tensorboard.SummaryWriter(log_dir=os.path.join(MODEL_DIR, 'train'))
 
     @cstorch.step_closure
     def post_training_step(loss):
         if LOG_STEPS and global_step % LOG_STEPS == 0:
             logging.info(
-                    f'| Train: {compiled_model.backend.name} '
+                    f'| Train: {model.device} '
                     f'Step={global_step}, '
                     f'Loss={loss.item():.5f}'
             )
 
         if torch.isnan(loss).any().item():
-            raise ValueError('NaN loss detected. ')
+            raise ValueError(
+                    'NaN loss detected. '
+                    'Please try diff hyperparams '
+                    'such as the lr, batch size, etc.'
+            )
         if torch.isinf(loss).any().item():
             raise ValueError('inf loss detected.')
 
@@ -128,18 +142,21 @@ def main_training_loop():
             cstorch.save_summaries(writer, global_step)
 
     batch_size = 4
-    dataloader = cstorch.utils.data.DataLoader(
-            input_fn_train, batch_size, num_steps=TRAINING_STEPS
+    dataloader = cstorch.utils.data.DataLoader(input_fn_train, batch_size)
+    executor = cstorch.utils.dat.DataExecutor(
+            dataloader,
+            num_steps=TRAINING_STEPS,
+            checkpoint_steps=CHECKPOINT_STEPS,
+            writer=writer,
+            cs_config=cs_config,
     )
 
-    for i, batch in enumerate(dataloader):
+    for _, batch in enumerate(executor):
         loss = training_step(batch)
 
         global_step += 1
         
         post_training_step(loss)
-
-        cstorch.scalar_summary('loss', loss)
 
         if CHECKPOINT_STEPS and global_step % CHECKPOINT_STEPS == 0:
             save_checkpoint(global_step)
@@ -150,20 +167,15 @@ if __name__ == '__main__':
 
     os.makedirs(os.path.join(os.getcwd(), 'imagenet_dataset'), exist_ok=True)
 
-    cstorch.configure(
-            model_dir=MODEL_DIR,
-            compile_dir='./compile_dir',
-            mount_dirs=[os.getcwd()],
+    cs_config = cstorch.utils.CSConfig(
+            model_dirs=[os.getcwd()],
             python_paths=[os.getcwd()],
-            compile_only=COMPILE_ONLY,
-            validate_only=VALIDATE_ONLY,
-            checkpoint_steps=CKPT_STEPS,
             max_wgt_servers=1,
             num_workers_per_csx=1,
             max_act_per_csx=1,
     )
 
-    main_training_loop()
+    main_training_loop(cs_config)
 
 
 

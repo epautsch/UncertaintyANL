@@ -1,32 +1,55 @@
-import torch
-from datasets import load_dataset
+import sys
+sys.path.insert(0, '/home/epautsch/R_1.8.0/modelzoo/')
+from modelzoo.transformers.pytorch.input_utils import num_tasks, task_id
+
 from torchvision import transforms
+from torchvision.datasets import ImageNet
+
+import torch
 from torch.utils.data import DataLoader
-from skimage.transform import resize
+from torch.nn import functional as F
 
 
-def imagenet_transforms(image):
-    image = resize(image, (224, 224), mode='reflect')
+class ImageNetDataset(ImageNet):
+    def __init__(self, root, split='train', transform=None):
+        super().__init__(root=root, split=split, transform=transform)
 
-    image = torch.from_numpy(image).float()
+        # sharding for cerebras
+        num_samples = len(self.samples)
+        self.samples = self.samples[task_id()::num_tasks()]
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    image = normalize(image)
-    return image
-
-
-def get_imagenet_dataset(split):
-    dataset = load_dataset('imagenet-1k', split=split, cache_dir='/srv/projects/UncertaintyDL/datasets/huggingface')
-    dataset.set_format(type='torch', columns=['image', 'label'])
-    dataset = dataset.map(lambda x: {'image': imagenet_transforms(x['image']), 'label': x['label']})
-    return dataset
+    #def __get__item(self, index):
+     #   img, target = super().__getitem__(index)
+      #  target = torch.tensor(target, dtype=torch.int32)
+       # return img, target
 
 
-def input_fn_train(batch_size=4, drop_last=False):
-    train_dataset = get_imagenet_dataset('train')
-    return DataLoader(train_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=True)
+def custom_collate_fn(batch):
+    images, labels = zip(*batch)
+    return torch.stack(images), torch.tensor(labels, dtype=torch.int32)
 
 
-def input_fn_eval(batch_size=4, drop_last=False):
-    eval_dataset = get_imagenet_dataset('validation')
-    return DataLoader(eval_dataset, batch_size=batch_size, drop_last=drop_last, shuffle=False)
+class ImageNetLoader(DataLoader):
+    def __init__(self, root_dir='/srv/projects/UncertaintyDL/datasets/imagenet/', split='train', transform=None, batch_size=1):
+        if transform is None:
+            # default
+            transform = transforms.Compose([
+                transforms.Lambda(lambda img: img.convert('RGB') if img.mode != 'RGB' else img),
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+
+        dataset = ImageNetDataset(root=root_dir, split=split, transform=transform)
+
+        super().__init__(dataset, batch_size=batch_size, shuffle=(split=='train'), drop_last=False, collate_fn=custom_collate_fn)
+
+
+def input_fn_train(batch_size=1):
+    return ImageNetLoader(split='train', batch_size=batch_size)
+
+
+def input_fn_eval(batch_size=1):
+    return ImageNetLoader(split='val', batch_size=batch_size)
+
