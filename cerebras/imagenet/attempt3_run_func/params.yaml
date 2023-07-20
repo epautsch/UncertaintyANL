@@ -1,5 +1,8 @@
 train_input:
-    split_percentage: 0.0001
+    batch_size: 4
+
+val_input:
+    batch_size: 4
 
 model:
     name: "vit"
@@ -19,6 +22,7 @@ optimizer:
     loss_scaling_factor: 1.0
 
 runconfig:
+    autogen_policy: "medium"
     max_steps: 10000
     checkpoint_steps: 2000
     log_steps: 50

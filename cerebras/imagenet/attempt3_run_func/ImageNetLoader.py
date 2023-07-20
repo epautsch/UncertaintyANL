@@ -18,19 +18,19 @@ class ImageNetDataset(ImageNet):
         num_samples = len(self.samples)
         self.samples = self.samples[task_id()::num_tasks()]
 
-    #def __get__item(self, index):
-     #   img, target = super().__getitem__(index)
-      #  target = torch.tensor(target, dtype=torch.int32)
-       # return img, target
+    def __get__item(self, index):
+        img, target = super().__getitem__(index)
+        target = torch.tensor(target, dtype=torch.int32)
+        return img, target
 
 
 def custom_collate_fn(batch):
     images, labels = zip(*batch)
-    return torch.stack(images).to(torch.float16), torch.tensor(labels, dtype=torch.int32)
+    return torch.stack(images), torch.tensor(labels, dtype=torch.int32)
 
 
 class ImageNetLoader(DataLoader):
-    def __init__(self, root_dir='/srv/projects/UncertaintyDL/datasets/imagenet/', split='train', transform=None, batch_size=4):
+    def __init__(self, root_dir='/srv/projects/UncertaintyDL/datasets/imagenet/', split='train', transform=None, batch_size=1):
         if transform is None:
             # default
             transform = transforms.Compose([
@@ -43,17 +43,4 @@ class ImageNetLoader(DataLoader):
 
         dataset = ImageNetDataset(root=root_dir, split=split, transform=transform)
 
-        super().__init__(dataset, batch_size=batch_size, shuffle=(split=='train'), drop_last=False, collate_fn=custom_collate_fn)
-
-
-def input_fn_train(params):
-    input_params = params['train_input']
-    batch_size = input_params.get('batch_size')
-    return ImageNetLoader(split='train', batch_size=batch_size)
-
-
-def input_fn_eval(params):
-    input_params = params['eval_input']
-    batch_size = input_parms.get('batch_size')
-    return ImageNetLoader(split='val', batch_size=batch_size)
-
+        super().__init__(dataset, batch_size=batch_size, shuffle=(split=='train'), drop_last=True, collate_fn=custom_collate_fn)

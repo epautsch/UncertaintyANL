@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from modelzoo.common.pytorch.PyTorchBaseModel import PyTorchBaseModel
 from modelzoo.common.pytorch.layers import CrossEntropyLoss
-from vit import ViT
+from vit import VisionTransformer
 
 
 class ViTModel(PyTorchBaseModel):
@@ -15,18 +15,14 @@ class ViTModel(PyTorchBaseModel):
         super().__init__(params=params, model_fn=self.model, device=device)
 
     def build_model(self, model_params):
-        dtype = torch.float32
-        model = ViT(model_params)
+        dtype = torch.float16
+        model = VisionTransformer(model_params=model_params)
         model.to(dtype)
         return model
 
     def __call__(self, data):
-        inputs = data['image']
-        labels = data['label']
-        print(labels.dtype)
-        labels = labels.to(torch.int32)
-        print(labels.dtype)
+        inputs = data[0]
+        labels = data[1]
         outputs = self.model(inputs)
-        print(outputs.dtype)
         loss = self.loss_fn(outputs, labels)
         return loss

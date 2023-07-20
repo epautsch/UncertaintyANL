@@ -26,11 +26,11 @@ class ImageNetDataset(ImageNet):
 
 def custom_collate_fn(batch):
     images, labels = zip(*batch)
-    return torch.stack(images), torch.tensor(labels, dtype=torch.int32)
+    return torch.stack(images).to(torch.float16), torch.tensor(labels, dtype=torch.int32)
 
 
 class ImageNetLoader(DataLoader):
-    def __init__(self, root_dir='/srv/projects/UncertaintyDL/datasets/imagenet/', split='train', transform=None, batch_size=1):
+    def __init__(self, root_dir='/srv/projects/UncertaintyDL/datasets/imagenet/', split='train', transform=None, batch_size=4):
         if transform is None:
             # default
             transform = transforms.Compose([
@@ -46,10 +46,10 @@ class ImageNetLoader(DataLoader):
         super().__init__(dataset, batch_size=batch_size, shuffle=(split=='train'), drop_last=False, collate_fn=custom_collate_fn)
 
 
-def input_fn_train(batch_size=1):
+def input_fn_train(batch_size=4):
     return ImageNetLoader(split='train', batch_size=batch_size)
 
 
-def input_fn_eval(batch_size=1):
+def input_fn_eval(batch_size=4):
     return ImageNetLoader(split='val', batch_size=batch_size)
 

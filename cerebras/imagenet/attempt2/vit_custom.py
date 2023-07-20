@@ -132,10 +132,10 @@ class VisionTransformer(nn.Module):
                 embed_dim=embed_dim,
         )
         self.cls_token = nn.Parameter(
-                torch.zeros(1, 1, embed_dim)
+                torch.zeros(1, 1, embed_dim), requires_grad=False
         )
         self.pos_embed = nn.Parameter(
-                torch.zeros(1, 1 + self.patch_embed.n_patches, embed_dim)
+                torch.zeros(1, 1 + self.patch_embed.n_patches, embed_dim), requires_grad=False
         )
         self.pos_drop = nn.Dropout(p=p)
 
@@ -156,10 +156,14 @@ class VisionTransformer(nn.Module):
         self.norm = nn.LayerNorm(embed_dim, eps=1e-6)
         self.head = nn.Linear(embed_dim, n_classes)
 
+    #@property
+    #def leaf_parameters(self):
+     #   return (p for p in self.parameters() if p.requires_grad and p.is_leaf)
+
     def forward(self, x):
         n_samples = x.shape[0]
         x = self.patch_embed(x)
-
+        
         cls_token = self.cls_token.expand(n_samples, -1, -1) # n_samps, 1, embed_dim
         x = torch.cat((cls_token, x), dim=1)
         x = x + self.pos_embed
@@ -174,6 +178,26 @@ class VisionTransformer(nn.Module):
         x = self.head(cls_token_final)
 
         return x
+"""
+    def forward(self, x):
+        n_samples = x.shape[0]
+        x = self.patch_embed(x)
+
+        cls_token = self.cls_token.expand(n_samples, -1, -1)  # n_samps, 1, embed_dim
+        x = torch.cat((cls_token, x), dim=1)
+        x = x + self.pos_embed
+        x = self.pos_drop(x)
+
+        for block in self.blocks:
+            x = block(x)
+            cls_token, x = x[:, 0, :].unsqueeze(1), x[:, 1:, :]  # keep cls_token separate after each block
+
+        cls_token = self.norm(cls_token)
+
+        x = self.head(cls_token.squeeze(1))
+
+        return x
+"""
 
 
 

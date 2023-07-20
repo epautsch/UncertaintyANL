@@ -10,6 +10,10 @@ from torch.utils.tensorboard import SummaryWriter
 from dataloader import input_fn_train, input_fn_eval
 from vit_custom import VisionTransformer
 
+#import sys
+#sys.path.insert(0, '/home/epautsch/R_1.8.0/modelzoo/')
+#from modelzoo.common.pytorch.layers import CrossEntropyLoss
+
 
 # configs
 MODEL_DIR = './'
@@ -28,16 +32,20 @@ def main_training_loop():
     torch.manual_seed(2023)
     
     model = VisionTransformer()
+    for idx, (name, param) in enumerate(model.named_parameters()):
+        print(f'AParam #{idx}, Is leaf: {param.is_leaf}, Name: {name}, Device: {param.device.type}')
+        print(param.requires_grad)
+
     compiled_model = cstorch.compile(model, backend='WSE_WS')
     
-    for idx, param in enumerate(model.parameters()):
-        print(f'Param #{idx}, Is leaf: {param.is_leaf}, Size: {param.size()}')
+  #  for idx, (name, param) in enumerate(model.named_parameters()):
+   #     print(f'BParam #{idx}, Is leaf: {param.is_leaf}, Size: {param.size()}, Name: {name}')
 
-    loss_fn = torch.nn.CrossEntropyLoss()
+    loss_fn = nn.CrossEntropyLoss()
 
     optimizer = cstorch.optim.configure_optimizer(
             optimizer_type='Adam',
-            params=model.parameters(),
+            params=compiled_model.parameters(),
             lr=0.01,
     )
 
@@ -47,7 +55,11 @@ def main_training_loop():
             'end_learning_rate': 0.001,
             'total_iters': 5,
     }
+
     lr_scheduler = cstorch.optim.configure_lr_scheduler(optimizer, lr_params)
+    
+    #for idx, (name, param) in enumerate(compiled_model.named_parameters()):
+     #   print(f'CParam #{idx}, Is leaf: {param.is_leaf}, Name: {name}, Device: {param.device.type}')
 
     grad_scaler = cstorch.amp.GradScaler(loss_scale='dynamic')
 
@@ -86,14 +98,14 @@ def main_training_loop():
         logging.info(f'Saved chkpnt {checkpoint_file}')
 
     global_step = 0
-
+    
     @cstorch.compile_step
     def training_step(batch):
         inputs, targets = batch
         outputs = compiled_model(inputs)
 
         loss = loss_fn(outputs, targets)
-
+        print(outputs.shape) 
         cstorch.amp.optimizer_step(
                 loss, optimizer, grad_scaler,
         )
