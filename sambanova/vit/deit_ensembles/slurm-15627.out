@@ -1,0 +1,149 @@
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__0__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__0__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__0__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__0__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__1__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__1__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__1__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__1__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__2__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__2__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__2__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__2__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__3__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__3__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__3__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__3__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__4__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__4__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__4__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__4__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__5__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__5__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__5__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__5__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__6__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__6__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__6__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__6__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__7__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__7__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__7__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__7__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__8__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__8__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__8__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__8__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__9__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__9__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__9__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__9__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__10__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__10__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__10__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__10__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__11__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__11__attn__permute__outputs__0_slice_0_1[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__blocks__11__attn__permute__outputs__0_slice_0, tensor renamed to visiontransformerdistilled__blocks__11__attn__permute__outputs__0_slice_0_2[0m
+[Warning][SAMBA]# [35mFound existing tensor name visiontransformerdistilled__norm__layernorm__outputs__0_slice_1, tensor renamed to visiontransformerdistilled__norm__layernorm__outputs__0_slice_1_1[0m
+Processing batch 1 of 97
+[Warning][SAMBA]# [35mInput tensor #0 has type <class 'list'> while only SambaTensor is supported. Non-SambaTensor inputs will be ignored.[0m
+Processing batch 2 of 97
+Processing batch 3 of 97
+Processing batch 4 of 97
+Processing batch 5 of 97
+Epoch [1/1], Step [5/97], Accuracy: 81.25%
+Processing batch 6 of 97
+Processing batch 7 of 97
+Processing batch 8 of 97
+Processing batch 9 of 97
+Processing batch 10 of 97
+Epoch [1/1], Step [10/97], Accuracy: 92.97%
+Processing batch 11 of 97
+Processing batch 12 of 97
+Processing batch 13 of 97
+Processing batch 14 of 97
+Processing batch 15 of 97
+Epoch [1/1], Step [15/97], Accuracy: 91.60%
+Processing batch 16 of 97
+Processing batch 17 of 97
+Processing batch 18 of 97
+Processing batch 19 of 97
+Processing batch 20 of 97
+Epoch [1/1], Step [20/97], Accuracy: 83.79%
+Processing batch 21 of 97
+Processing batch 22 of 97
+Processing batch 23 of 97
+Processing batch 24 of 97
+Processing batch 25 of 97
+Epoch [1/1], Step [25/97], Accuracy: 84.38%
+Processing batch 26 of 97
+Processing batch 27 of 97
+Processing batch 28 of 97
+Processing batch 29 of 97
+Processing batch 30 of 97
+Epoch [1/1], Step [30/97], Accuracy: 84.96%
+Processing batch 31 of 97
+Processing batch 32 of 97
+Processing batch 33 of 97
+Processing batch 34 of 97
+Processing batch 35 of 97
+Epoch [1/1], Step [35/97], Accuracy: 83.40%
+Processing batch 36 of 97
+Processing batch 37 of 97
+Processing batch 38 of 97
+Processing batch 39 of 97
+Processing batch 40 of 97
+Epoch [1/1], Step [40/97], Accuracy: 80.66%
+Processing batch 41 of 97
+Processing batch 42 of 97
+Processing batch 43 of 97
+Processing batch 44 of 97
+Processing batch 45 of 97
+Epoch [1/1], Step [45/97], Accuracy: 78.91%
+Processing batch 46 of 97
+Processing batch 47 of 97
+Processing batch 48 of 97
+Processing batch 49 of 97
+Processing batch 50 of 97
+Epoch [1/1], Step [50/97], Accuracy: 76.56%
+Processing batch 51 of 97
+Processing batch 52 of 97
+Processing batch 53 of 97
+Processing batch 54 of 97
+Processing batch 55 of 97
+Epoch [1/1], Step [55/97], Accuracy: 85.16%
+Processing batch 56 of 97
+Processing batch 57 of 97
+Processing batch 58 of 97
+Processing batch 59 of 97
+Processing batch 60 of 97
+Epoch [1/1], Step [60/97], Accuracy: 88.48%
+Processing batch 61 of 97
+Processing batch 62 of 97
+Processing batch 63 of 97
+Processing batch 64 of 97
+Processing batch 65 of 97
+Epoch [1/1], Step [65/97], Accuracy: 67.77%
+Processing batch 66 of 97
+Processing batch 67 of 97
+Processing batch 68 of 97
+Processing batch 69 of 97
+Processing batch 70 of 97
+Epoch [1/1], Step [70/97], Accuracy: 80.86%
+Processing batch 71 of 97
+Processing batch 72 of 97
+Processing batch 73 of 97
+Processing batch 74 of 97
+Processing batch 75 of 97
+Epoch [1/1], Step [75/97], Accuracy: 77.73%
+Processing batch 76 of 97
+Processing batch 77 of 97
+Processing batch 78 of 97
+Processing batch 79 of 97
+Processing batch 80 of 97
+Epoch [1/1], Step [80/97], Accuracy: 67.97%
+Processing batch 81 of 97
+Processing batch 82 of 97
+Processing batch 83 of 97
+Processing batch 84 of 97
+Processing batch 85 of 97
+Epoch [1/1], Step [85/97], Accuracy: 78.52%
+Processing batch 86 of 97
+Processing batch 87 of 97
+Processing batch 88 of 97
+Processing batch 89 of 97
+Processing batch 90 of 97
+Epoch [1/1], Step [90/97], Accuracy: 85.16%
+Processing batch 91 of 97
+Processing batch 92 of 97
+Processing batch 93 of 97
+Processing batch 94 of 97
+Processing batch 95 of 97
+Epoch [1/1], Step [95/97], Accuracy: 73.05%
+Processing batch 96 of 97
+Processing batch 97 of 97
+Final average accuracy: 81.05%
+2023-07-27T05:24:29 : [INFO][LIB][46675]: sn_create_session: PEF File: /home/epautsch/sambanova/vit/deit_ensembles/deit_small_distilled_patch16_224/pef/deit_small_distilled/deit_small_distilled.pef
+Log ID initialized to: [epautsch][python][46675] at /var/log/sambaflow/runtime/sn.log
+
+real	3m27.288s
+user	3m26.603s
+sys	0m42.218s

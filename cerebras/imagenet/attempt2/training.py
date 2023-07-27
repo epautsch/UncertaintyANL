@@ -10,6 +10,15 @@ from torch.utils.tensorboard import SummaryWriter
 from dataloader import input_fn_train, input_fn_eval
 from vit_custom import VisionTransformer
 
+# autogen policy workaround 1/3
+from cerebras_appliance.pb.workflow.appliance.common.common_config_pb2 import (
+        DebugArgs,
+)
+from cerebras_appliance.run_utils import (
+        update_debug_args_with_autogen_policy,
+)
+# end workaround
+
 #import sys
 #sys.path.insert(0, '/home/epautsch/R_1.8.0/modelzoo/')
 #from modelzoo.common.pytorch.layers import CrossEntropyLoss
@@ -161,6 +170,11 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     os.makedirs(os.path.join(os.getcwd(), 'imagenet_dataset'), exist_ok=True)
+    
+    # autogen policy workaround 2/3
+    debug_args = DebugArgs()
+    update_debug_args_with_autogen_policy(debug_args, 'medium')
+    # end workaround
 
     cstorch.configure(
             model_dir=MODEL_DIR,
@@ -173,6 +187,7 @@ if __name__ == '__main__':
             max_wgt_servers=1,
             num_workers_per_csx=1,
             max_act_per_csx=1,
+            debug_args=debug_args, # autogen policy workaround 3/3
     )
 
     main_training_loop()
